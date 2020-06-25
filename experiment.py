@@ -9,32 +9,42 @@ from tabulate import tabulate
 
 logger = logging.getLogger("MSI")
 
+# Generating or reading input data
+n_clusters = 5
+
 # dataset = np.genfromtxt("./dataset/australian.csv", delimiter=",")
 # X = dataset[:, :-1]
-X, y = make_blobs(n_samples=100, n_features=2, random_state=123)
-logger.log(logging.DEBUG, msg="Data generated")
 
+X, y = make_blobs(n_samples=500, n_features=2, centers=n_clusters, random_state=123)
+
+
+# Algorithms
 clrs = {
-    "k-Means": KMeans(n_clusters=3, random_state=957),
+    "k-Means": KMeans(n_clusters=n_clusters, random_state=957),
     "MeanShift": MeanShift(),  # if not given, the bandwidth is estimated using sklearn.cluster.estimate_bandwidth
     "DBScan": DBSCAN(),
     "OPTICS": OPTICS()
 }
-print("Clustering methods created")
 
-labels = clrs["MeanShift"].fit_predict(X)
-labels_unique = np.unique(labels)
-n_clusters_ = len(labels_unique)
-print("Number of estimated clusters : %d" % n_clusters_)
-logger.log(logging.DEBUG, msg="MeanShift finished")
 
-plt.figure(figsize=(5, 2.5))
-plt.scatter(X[:, 0], X[:, 1], c=labels, cmap="bwr")
-plt.xlabel("$x^1$")
-plt.ylabel("$x^2$")
-plt.tight_layout()
+# MeanShift
+for idx, clr_name in enumerate(clrs):
+    clr = clrs[clr_name].fit(X)
+    labels_unique = np.unique(clr.labels_)
+    n_clusters_ = len(labels_unique)
+    print(f"{clr_name}. Estimated clusters: %d" % n_clusters_)
+
+    # 2D figure
+    plt.subplot(2, 2, idx + 1)
+    plt.scatter(X[:, 0], X[:, 1], c=clr.labels_)
+    plt.xlabel("$x^1$")
+    plt.ylabel("$x^2$")
+    plt.tight_layout()
+    
+
 plt.savefig(f"./plots/{datetime.now().strftime('%Y-%m-%d__%H-%M-%S')}.png")
 logger.log(logging.DEBUG, msg="Plot saved")
+
 # # 3D figure
 # fig = plt.figure(figsize=(12, 7), dpi=80, facecolor="w", edgecolor="k")
 # ax = plt.axes(projection="3d")
@@ -43,6 +53,7 @@ logger.log(logging.DEBUG, msg="Plot saved")
 # yLabel = ax.set_ylabel("Y")
 # zLabel = ax.set_zlabel("Z")
 
+# # Results formating
 # headers = ["GNB", "kNN", "CART"]
 # names_column = np.array([["GNB"], ["kNN"], ["CART"]])
 # t_statistic_table = np.concatenate((names_column, t_statistic), axis=1)
