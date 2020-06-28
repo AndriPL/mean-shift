@@ -1,15 +1,30 @@
 from datetime import datetime
 
 import numpy as np
-from scipy.stats import ttest_ind
+from scipy.stats import rankdata, ttest_ind
 from tabulate import tabulate
 
 from experiment_config import clrs
 
 scores = np.load(f"./results/scores.npz")
 
+# for measure in scores:
+#     print(f"\n{measure}s:\n", scores[measure].shape)
+
+mean_scores = {}
 for measure in scores:
-    print(f"\n{measure}s:\n", scores[measure].shape)
+    # mean_scores = np.mean(scores[measure], axis=2).T
+    mean_scores.setdefault(measure, scores[measure].T)
+    # print(f"\n{measure} mean_scores:\n", mean_scores[measure])
+
+
+ranks = {}
+for measure in mean_scores:
+    measure_ranks = []
+    for score in mean_scores[measure]:
+        measure_ranks.append(rankdata(score).tolist())
+    ranks.setdefault(measure, np.array(measure_ranks))
+    print(f"\n{measure} ranks:\n", ranks[measure])
 
 
 # # Statistical analysis
