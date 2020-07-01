@@ -4,21 +4,27 @@ from sklearn.neighbors import DistanceMetric
 from sklearn.utils.validation import check_array, check_is_fitted
 
 
-def find_neighbours(points, center, bandwidth, metric):
-    distance_metric = DistanceMetric.get_metric(metric)
-    neigbours = []
-    distances = distance_metric.pairwise(points, np.array(center, ndmin=2))
-
+def find_neighbours(center, bandwidth, dist_metric, points):
+    neighbours = []
+    # for each point calculate distances from center
+    distances = dist_metric.pairwise(points, np.array(center, ndmin=2))
+    # find points within bandwidth from center
     for i, distance in enumerate(distances):
         if distance <= bandwidth:
-            neigbours.append(points[i])
+            neighbours.append(points[i])
+    return neighbours
 
-    return neigbours
 
-
-def flat_kernel(self, X):
-    pass
-
+def get_mean_shift_vector(bandwidth, center, dist_metric, kernel, neighbours):
+    numerator = 0
+    denominator = 0
+    for neighbour in neighbours:
+        distance = dist_metric.pairwise(center, neighbour)
+        weight = kernel(distance, bandwidth)
+        numerator += (weight * neighbour)
+        denominator += weight
+    new_center = numerator / denominator
+    return new_center-center
 
 class MyMeanShift(BaseEstimator, ClusterMixin):
     """
@@ -27,9 +33,8 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
     """
 
     def __init__(
-        self, bandwidth=None, kernel=flat_kernel, metric="euclidean"
+        self, bandwidth=None, metric="euclidean"
     ):  # metric?
-        self.kernel = kernel
         self.bandwidth = bandwidth
         self.metric = metric
         self.dm_ = DistanceMetric.get_metric(self.metric)
