@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.utils.validation import check_array, check_is_fitted
 from sklearn.neighbors import DistanceMetric
+from sklearn.utils.validation import check_array, check_is_fitted
 
 
 def find_neighbours(points, center, bandwidth, metric):
@@ -19,6 +19,7 @@ def find_neighbours(points, center, bandwidth, metric):
 def flat_kernel(self, X):
     pass
 
+
 class MyMeanShift(BaseEstimator, ClusterMixin):
     """
     Mean Shift clustering.
@@ -31,6 +32,8 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
         self.kernel = kernel
         self.bandwidth = bandwidth
         self.metric = metric
+        self.dm_ = DistanceMetric.get_metric(self.metric)
+        self.centroids_ = None
 
     def fit(self, X, y=None):
         # data validation
@@ -46,11 +49,15 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
         return self
 
     def predict(self, X, y=None):
-        pass
-        # # check if fitting has been performed
-        # check_is_fitted(self)
-        # # data validation
-        # X = check_array(X)
+        # check if fitting has been performed
+        check_is_fitted(self)
+        # data validation
+        X = check_array(X)
+        # for every point calculate distances to centroids
+        distances = self.dm_.pairwise(self.centroids_, X)
+        # for every point find nearest centroid
+        y_pred = np.argmin(distances, axis=0)
+        return y_pred
 
         # return pairwise_distances_argmin(X, self.cluster_centers_)
 
