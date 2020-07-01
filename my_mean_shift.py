@@ -11,7 +11,8 @@ class MyMeanShift(BaseEstimator, ClassifierMixin):
     def __init__(self, bandwidth=None, metric='euclidean'): # metric, kernel?
         self.bandwidth = bandwidth
         self.metric = metric
-        
+        self.dm_ = DistanceMetric.get_metric(self.metric)
+ 
 
     def fit(self, X, y=None):
         # # data validation
@@ -26,33 +27,18 @@ class MyMeanShift(BaseEstimator, ClassifierMixin):
         return self
 
     
-    def predict(self, X, centroids_, y=None):
-        pass
+    def predict(self, X, y=None):
+        
         # check if fitting has been performed 
         check_is_fitted(self)
         # data validation
         X = check_array(X)
         # liczymy dystanse instancji testowych od centroidow
    
-        # WERSJA NUMER 1
-        # result = np.zeros((len(X)))
-        
-        # for i in range(len(X)):
-        #     distance_pred = np.array([])
-        #     for y in range(len(self.centroids_)): 
-        #         distance_pred = self.dm_.pairwise(self.centroids_[y], X[i])
 
-            
-        #     result.append = np.argmin(distance_pred, axis=0)
-        
-
-        # return (X, result)
-
-        # WERSJA NUMER 2
         distance_pred = self.dm_.pairwise(self.centroids_, X)
 
         y_pred = np.argmin(distance_pred, axis=0)
-
         return y_pred
 
 
@@ -64,4 +50,3 @@ class MyMeanShift(BaseEstimator, ClassifierMixin):
         # return self.labels_
 
 
-print("work")
