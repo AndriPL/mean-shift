@@ -9,4 +9,4 @@ def gaussian_kernel(distance, bandwidth):
     )
 
 def flat_kernel(distance, bandwidth):
-    return distance < bandwidth
+    return distance <= bandwidth
