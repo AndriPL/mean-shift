@@ -1,28 +1,10 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.neighbors import DistanceMetric
-from sklearn.utils.validation import check_array, check_is_fitted
-from kernels import gaussian_kernel, flat_kernel
 from sklearn.cluster._mean_shift import estimate_bandwidth
+from sklearn.neighbors import BallTree, DistanceMetric
+from sklearn.utils.validation import check_array, check_is_fitted
 
-
-def find_neighbours(bandwidth, center, dist_metric, points):
-    # for each point calculate distances from center
-    distances = dist_metric.pairwise(points, np.array(center, ndmin=2))
-    # find points within bandwidth from center
-    return [points[i] for i, distance in enumerate(distances) if distance <= bandwidth]
-
-
-def shift_center(bandwidth, center, dist_metric, kernel, neighbours):
-    numerator = 0
-    denominator = 0
-    for neighbour in neighbours:
-        distance = dist_metric.pairwise([center], [neighbour])
-        weight = kernel(distance, bandwidth)
-        numerator += weight * neighbour
-        denominator += weight
-    new_center = numerator / denominator
-    return new_center
+from kernels import flat_kernel
 
 
 class MyMeanShift(BaseEstimator, ClusterMixin):
@@ -43,22 +25,19 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
         # estimate bandwidth
         if self.bandwidth is None:
             self.bandwidth = estimate_bandwidth(X, n_jobs=1) # TODO
+
+        self.tree_ = BallTree(X, leaf_size=X.size)
+
         # perform data clustering
         cluster_centers = np.copy(X)
         for n in range(self.max_n_iter):
             for i, center in enumerate(cluster_centers):
-                neighbours = find_neighbours(
+                neighbours_idxs = self.find_neighbours(center=np.array(center, ndmin=2))
+                cluster_centers[i] = self.shift_center(
                     center=center,
-                    bandwidth=self.bandwidth,
-                    dist_metric=self.dist_metric,
-                    points=X
-                )
-                cluster_centers[i] = shift_center(
-                    bandwidth=self.bandwidth,
-                    center=center,
-                    dist_metric=self.dist_metric,
                     kernel=flat_kernel,
-                    neighbours=neighbours
+                    neighbours=np.array(X[neighbours_idxs]),
+                    X=X
                 )
             cluster_centers = np.unique(cluster_centers, axis=0)
         self.cluster_centers_ = cluster_centers
@@ -83,3 +62,20 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
     def fit_predict(self, X, y=None):
         self.fit(X)
         return self.labels_
+
+
+    def find_neighbours(self, center):
+        # for each point calculate distances from center
+        neighbours_idxs = self.tree_.query_radius(center, self.bandwidth)
+        return neighbours_idxs[0]
+
+    def shift_center(self, center, kernel, neighbours, X):
+        distances = self.dist_metric.pairwise([center], neighbours)
+        weights = kernel(distances, self.bandwidth)
+        numerator = np.multiply(
+            np.tile(weights.T, neighbours.shape[1]), 
+            neighbours
+        ).sum(axis=0)
+        denominator = np.sum(weights)
+        new_center = np.divide(numerator, denominator)
+        return new_center
