@@ -1,6 +1,13 @@
 from sklearn.cluster import DBSCAN, OPTICS, KMeans, MeanShift
-from sklearn.metrics import (adjusted_rand_score, completeness_score,
-                             homogeneity_score, v_measure_score)
+from sklearn.metrics import (
+    adjusted_rand_score,
+    completeness_score,
+    homogeneity_score,
+    v_measure_score,
+)
+
+from my_mean_shift import MyMeanShift
+
 
 # Parameters
 n_samples = 500
@@ -42,21 +49,32 @@ datasets = [
 # ]
 
 
+# # Algorithms
+# clrs = {
+#     "k-Means": KMeans(random_state=km_random_state),
+#     "MeanShift": MeanShift(),  # if not given, the bandwidth is estimated using sklearn.cluster.estimate_bandwidth
+#     "DBScan": DBSCAN(),
+#     "OPTICS": OPTICS()
+# }
+
+# # fit_predict method for each algorithm - because DBScan and OPTICS doesn't have predict() method
+# fit_predict = {
+#     "k-Means": lambda clr, X_train, X_test: clr.fit(X_train).predict(X_test),
+#     "MeanShift": lambda clr, X_train, X_test: clr.fit(X_train).predict(X_test),
+#     "DBScan": lambda clr, _, X_test: clr.fit_predict(X_test),
+#     "OPTICS": lambda clr, _, X_test: clr.fit_predict(X_test)
+# }
 
 # Algorithms
 clrs = {
-    "k-Means": KMeans(random_state=km_random_state),
+    "MyMeanShift": MyMeanShift(),
     "MeanShift": MeanShift(),  # if not given, the bandwidth is estimated using sklearn.cluster.estimate_bandwidth
-    "DBScan": DBSCAN(),
-    "OPTICS": OPTICS()
 }
 
 # fit_predict method for each algorithm - because DBScan and OPTICS doesn't have predict() method
 fit_predict = {
-    "k-Means": lambda clr, X_train, X_test: clr.fit(X_train).predict(X_test),
+    "MyMeanShift": lambda clr, X_train, X_test: clr.fit(X_train).predict(X_test),
     "MeanShift": lambda clr, X_train, X_test: clr.fit(X_train).predict(X_test),
-    "DBScan": lambda clr, _, X_test: clr.fit_predict(X_test),
-    "OPTICS": lambda clr, _, X_test: clr.fit_predict(X_test)
 }
 
 # Measures
@@ -64,5 +82,5 @@ measures = {
     "adjusted_rand_score": adjusted_rand_score,
     "completeness_score": completeness_score,
     "homogeneity_score": homogeneity_score,
-    "v_measure_score": v_measure_score
+    "v_measure_score": v_measure_score,
 }

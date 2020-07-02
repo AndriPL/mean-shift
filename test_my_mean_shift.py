@@ -14,7 +14,7 @@ clr = MeanShift()
 clr.fit(X)
 clusters = clr.cluster_centers_
 
-my_ms = MyMeanShift(bandwidth=3)
+my_ms = MyMeanShift()
 results = my_ms.fit_predict(X)
 print(y)
 print(results)
