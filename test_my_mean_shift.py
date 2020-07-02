@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.cluster import MeanShift
 
-from my_mean_shift import MyMeanShift, find_neighbours
+from my_mean_shift import MyMeanShift
 
 # datasets_path = "./datasets/"
 # dataset_name = "iris"
@@ -17,9 +17,8 @@ X = np.array(
 )
 
 my_ms = MyMeanShift()
-results = my_ms.fit(X)
-neighbours = my_ms.find_neighbours(center=[[2, 2]])
-print(f"Neighbours: \n{neighbours}")
+results = my_ms.fit_predict(X)
+print(f"Results: \n{results}")
 
 # print(y)
 # print(results)

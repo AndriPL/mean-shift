@@ -13,7 +13,7 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
     Algorytm segmentacji Mean Shift.
     """
 
-    def __init__(self, bandwidth=None, dist_metric="euclidean", max_n_iter = 10):
+    def __init__(self, bandwidth=None, dist_metric="euclidean", max_n_iter = 20):
         self.bandwidth = bandwidth
         self.dist_metric = DistanceMetric.get_metric(dist_metric)
         self.max_n_iter = max_n_iter
@@ -25,23 +25,34 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
         # estimate bandwidth
         if self.bandwidth is None:
             self.bandwidth = estimate_bandwidth(X, n_jobs=1) # TODO
-
+        # Create BallTree for faster detection of points within bandwidth
         self.tree_ = BallTree(X, leaf_size=X.size)
 
         # perform data clustering
-        cluster_centers = np.copy(X)
+        centroids = np.copy(X)
+        prev_centroids = []
         for n in range(self.max_n_iter):
-            for i, center in enumerate(cluster_centers):
-                neighbours_idxs = self.find_neighbours(center=np.array(center, ndmin=2))
-                cluster_centers[i] = self.shift_center(
-                    center=center,
+            for i, centroid in enumerate(centroids):
+                # Find points within bandwidth
+                neighbours_idxs = self._find_neighbours(center=np.array(centroid, ndmin=2))
+                # Shift centroid
+                centroids[i] = self._shift_center(
+                    center=centroid,
                     kernel=flat_kernel,
-                    neighbours=np.array(X[neighbours_idxs]),
-                    X=X
+                    neighbours=np.array(X[neighbours_idxs])
                 )
-            cluster_centers = np.unique(cluster_centers, axis=0)
-        self.cluster_centers_ = cluster_centers
 
+            centroids = np.unique(centroids, axis=0) # TODO maybe move it below convergence detection
+            
+            # If centroids didn't changed, then finish
+            optimized = False
+            if np.array_equal(centroids, prev_centroids):
+                optimized = True  
+            if optimized:
+                break
+            prev_centroids = centroids
+
+        self.centroids_ = centroids
         self.labels_ = self.predict(X)
 
         return self
@@ -52,24 +63,22 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
         # data validation
         X = check_array(X)
         # for every point calculate distances to centroids
-        distances = self.dist_metric.pairwise(self.cluster_centers_, X)
+        distances = self.dist_metric.pairwise(self.centroids_, X)
         # for every point find nearest centroid
         y_pred = np.argmin(distances, axis=0)
         return y_pred
 
-        # return pairwise_distances_argmin(X, self.cluster_centers_)
 
     def fit_predict(self, X, y=None):
         self.fit(X)
         return self.labels_
 
 
-    def find_neighbours(self, center):
-        # for each point calculate distances from center
+    def _find_neighbours(self, center):
         neighbours_idxs = self.tree_.query_radius(center, self.bandwidth)
         return neighbours_idxs[0]
 
-    def shift_center(self, center, kernel, neighbours, X):
+    def _shift_center(self, center, kernel, neighbours):
         distances = self.dist_metric.pairwise([center], neighbours)
         weights = kernel(distances, self.bandwidth)
         numerator = np.multiply(
