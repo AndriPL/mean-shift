@@ -24,7 +24,7 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
         self.X_ = X
         # estimate bandwidth
         if self.bandwidth is None:
-            self.bandwidth = estimate_bandwidth(X, n_jobs=1) # TODO
+            self.bandwidth = estimate_bandwidth(X, n_jobs=1)
         # Create BallTree for faster detection of points within bandwidth
         self.tree_ = BallTree(X, leaf_size=X.size)
 
@@ -44,7 +44,7 @@ class MyMeanShift(BaseEstimator, ClusterMixin):
 
             centroids = np.unique(centroids, axis=0) # TODO maybe move it below convergence detection
             
-            # If centroids didn't changed, then finish
+            # If centroids didn't change, then finish
             optimized = False
             if np.array_equal(centroids, prev_centroids):
                 optimized = True  

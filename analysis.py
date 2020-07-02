@@ -64,14 +64,14 @@ for measure in ranks:
     advantage[w_statistic > 0] = 1
     advantage_table = tabulate(np.concatenate(
         (names_column, advantage), axis=1), headers)
-    print("\nAdvantage:\n", advantage_table)
+    # print("\nAdvantage:\n", advantage_table)
 
     # Calculate significance
     significance = np.zeros((len(clrs), len(clrs)))
     significance[p_value <= alfa] = 1
     significance_table = tabulate(np.concatenate(
         (names_column, significance), axis=1), headers)
-    print("\nStatistical significance (alpha = 0.05):\n", significance_table)
+    # print("\nStatistical significance (alpha = 0.05):\n", significance_table)
 
     # Which algoritm is better
     stat_better = significance * advantage
